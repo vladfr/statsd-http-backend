@@ -63,10 +63,14 @@ var post_stats = function graphite_post_stats(metricsArray) {
       metricsArray.push(new metric(namespace + '.graphiteStats.flush_time', flush_time, ts));
       metricsArray.push(new metric(namespace + '.graphiteStats.flush_length', flush_length, ts));
 
-      var data = JSON.stringify(metricsArray);
+      var data = [];
+      for (metric in metricsArray) {
+        data.push(metric.path+"="+metric.value);
+      }
+      //var data = JSON.stringify(metricsArray);
 
-      var options = url.parse(bridgeURL + api_key);
-      options.method = 'POST';
+      var options = url.parse(bridgeURL+'?'+data.join('&');
+      options.method = 'GET';
       options.headers = {'Content-Length': data.length};
 
       var req = http.request(options, function(res) {
@@ -84,7 +88,7 @@ var post_stats = function graphite_post_stats(metricsArray) {
         graphiteStats.last_flush = Math.round(new Date().getTime() / 1000);
       });
 
-      req.write(data);
+      //req.write(data);
       req.end();
     } catch(e){
       if (debug) {
