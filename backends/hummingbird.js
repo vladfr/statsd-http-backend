@@ -33,12 +33,10 @@ var onFlush = function(time_stamp, metrics) {
 	for (key in data) {
 		if (data[key] > 0) s.push(key+'='+data[key]);
 	}
-	doRequest(s);
 };
 
 var doRequest = function(data) {
 	try {
-
 		var options = url.parse(host+'?'+data.join('&'));
 		options.method = 'GET';
 		options.headers = {'Content-Length': 0};
@@ -58,11 +56,28 @@ var doRequest = function(data) {
 		req.end();
 	}
 	catch(e) {
-	  	if (debug) {
-	  		util.log(e);
-	  	}
+		if (debug) {
+			util.log(e);
+		}
 	}
 }
+
+var onPacket = function(msg, rinfo) {
+	var packet_data = msg.toString();
+	if (packet_data.indexOf("\n") > -1) {
+		var metrics = packet_data.split("\n");
+	} else {
+		var metrics = [ packet_data ] ;
+	}
+	for (k in metrics){
+		p = metrics[k].toString().split(':');
+		data = p[1].split('|');
+		metric = p[0].split('.');
+		metricName = metric.slice(metric.length - metricCut, metric.length).join('.');
+		value = data[0];
+		doRequest(['event='+metricName]);
+	}
+};
 
 var onStatus = function(callback) {
 
@@ -79,6 +94,7 @@ exports.init = function(startup_time, config, events) {
 
 	events.on('flush', onFlush);
 	events.on('status', onStatus);
+	events.on('packet', onPacket);
 
 	return true;
 };
