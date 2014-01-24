@@ -5,11 +5,9 @@ url = require('url');
 
 var debug;
 var host;
-var _status;
+var metricCut = 3;
 
 var onFlush = function(time_stamp, metrics) {
-	console.log(metrics);
-	
 	var data = [];
 
 	// for(var key in metrics.gauges) {
@@ -25,29 +23,35 @@ var onFlush = function(time_stamp, metrics) {
 	// }
 
 	for(var key in metrics.counters) {
-		data.push(key+'='+metrics.counters[key]);
+		var ksplit = key.split('.');
+		var newkey = ksplit.slice(ksplit.length - metricCut,ksplit.length).join('.');
+		if ("undefined" == typeof data[newkey]) data[newkey] = 0;
+		data[newkey] += metrics.counters[key];
 	}
+
+	var s = [];
+	for (key in data) {
+		if (data[key] > 0) s.push(key+'='+data[key]);
+	}
+	doRequest(s);
 };
 
-var doRequest(data) {
-	var options = url.parse(host+'?'+data.join('&'));
-	options.method = 'GET';
-	options.headers = {'Content-Length': 0};
-
+var doRequest = function(data) {
 	try {
+
+		var options = url.parse(host+'?'+data.join('&'));
+		options.method = 'GET';
+		options.headers = {'Content-Length': 0};
+
 		var req = http.request(options, function(res) {
 			res.setEncoding('utf8');
 		});
 
 		req.on('error', function(e) {
 			console.log('problem with request: ' + e.message);
-			_status.last_exception = Math.round(new Date().getTime() / 1000);
 		});
 
 		req.on('close', function(e){
-			_status.flush_time = (Date.now() - starttime);
-			_status.flush_length = data.length;
-			_status.last_flush = Math.round(new Date().getTime() / 1000);
 		});
 
 		//req.write(data);
@@ -57,7 +61,6 @@ var doRequest(data) {
 	  	if (debug) {
 	  		util.log(e);
 	  	}
-	  	_status.last_exception = Math.round(new Date().getTime() / 1000);
 	}
 }
 
@@ -73,7 +76,6 @@ exports.init = function(startup_time, config, events) {
 
 	host = config.bridgeURL;
 	debug = config.statsdDebug || false;
-	_status = {};
 
 	events.on('flush', onFlush);
 	events.on('status', onStatus);
