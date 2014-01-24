@@ -1,27 +1,21 @@
-statsd-http-backend
+statsd-hummingbird-backend
 ===================
 
-POSTS Data in JSON List format to an HTTP Backend
+Emits data to a HTTP backend via GET request, to use with [Hummingbird](https://github.com/mnutt/hummingbird) dashboard
 
 installation
 ============
 
-   npm install statsd-graphite-http-backend
+   npm install statsd-hummingbird-backend
 
 usage
 =====
 
-In config.js:  
+In config.js:
 
 ```
 {
 backends: [ "statsd-graphite-http-backend" ],
-api_key: 'YOUR CONFIGURED API KEY',
-bridgeURL: 'http://GRAPHITE_SERVER:HTTP_PORT/publish/'
+bridgeURL: 'http://HUMM_TRACKER:HTTP_PORT/tracking_pixel.gif'
 }
 ```
-
-notes
-=====
-
-Should work with both [Backstop](https://github.com/obfuscurity/backstop) and [Graphite HTTP Bridge](https://github.com/bmhatfield/graphite-http-bridge)
